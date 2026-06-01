@@ -1,4 +1,3 @@
-cat > /mnt/user-data/outputs/places2go.html << 'ENDOFFILE'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,8 +30,9 @@ cat > /mnt/user-data/outputs/places2go.html << 'ENDOFFILE'
     const OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast";
     const LAT = 42.707;
     const LON = -71.163;
+    const STORAGE_KEY = "places2go_data";
 
-    const initialPlaces = [
+    const defaultPlaces = [
       { id: 1, name: "603 BBQ", location: "Concord, NH", visited: false, category: "food", notes: "", onList: true },
       { id: 2, name: "Big Pig", location: "Ipswich, MA", visited: true, category: "food", notes: "Already been!", onList: true },
       { id: 3, name: "Harpoon Brewery", location: "Manchester, NH", visited: false, category: "brewery", notes: "Top pick!", favorite: true, onList: true },
@@ -45,6 +45,18 @@ cat > /mnt/user-data/outputs/places2go.html << 'ENDOFFILE'
       { id: 10, name: "Rusty Can", location: "Byfield, MA", visited: false, category: "bar", notes: "", onList: true },
       { id: 11, name: "Carmine", location: "Newburyport, MA", visited: false, category: "food", notes: "", onList: true },
     ];
+
+    function loadPlaces() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch(e) {}
+      return defaultPlaces;
+    }
+
+    function savePlaces(places) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(places)); } catch(e) {}
+    }
 
     const bonusSpots = [
       { name: "Flatbread Company", location: "Amesbury, MA", emoji: "🍕", category: "food", vibe: "🍷 Cozy date night", drive: "~25 min", details: "Wood-fired pizza in a warm, rustic space. Great for a chill dinner with good vibes.", weatherFit: "Indoor", reason: "Cozy wood-fired pizza spot — perfect for a relaxed night out." },
@@ -62,24 +74,24 @@ cat > /mnt/user-data/outputs/places2go.html << 'ENDOFFILE'
     ];
 
     const WMO_CODES = {
-      0: { label: "Clear sky", emoji: "☀️" }, 1: { label: "Mainly clear", emoji: "🌤️" },
-      2: { label: "Partly cloudy", emoji: "⛅" }, 3: { label: "Overcast", emoji: "☁️" },
-      45: { label: "Foggy", emoji: "🌫️" }, 48: { label: "Icy fog", emoji: "🌫️" },
-      51: { label: "Light drizzle", emoji: "🌦️" }, 53: { label: "Drizzle", emoji: "🌦️" },
-      55: { label: "Heavy drizzle", emoji: "🌧️" }, 61: { label: "Light rain", emoji: "🌧️" },
-      63: { label: "Rain", emoji: "🌧️" }, 65: { label: "Heavy rain", emoji: "🌧️" },
-      71: { label: "Light snow", emoji: "🌨️" }, 73: { label: "Snow", emoji: "❄️" },
-      75: { label: "Heavy snow", emoji: "❄️" }, 80: { label: "Rain showers", emoji: "🌦️" },
-      81: { label: "Rain showers", emoji: "🌧️" }, 82: { label: "Heavy showers", emoji: "⛈️" },
-      95: { label: "Thunderstorm", emoji: "⛈️" }, 99: { label: "Thunderstorm", emoji: "⛈️" },
+      0:{label:"Clear sky",emoji:"☀️"},1:{label:"Mainly clear",emoji:"🌤️"},
+      2:{label:"Partly cloudy",emoji:"⛅"},3:{label:"Overcast",emoji:"☁️"},
+      45:{label:"Foggy",emoji:"🌫️"},48:{label:"Icy fog",emoji:"🌫️"},
+      51:{label:"Light drizzle",emoji:"🌦️"},53:{label:"Drizzle",emoji:"🌦️"},
+      55:{label:"Heavy drizzle",emoji:"🌧️"},61:{label:"Light rain",emoji:"🌧️"},
+      63:{label:"Rain",emoji:"🌧️"},65:{label:"Heavy rain",emoji:"🌧️"},
+      71:{label:"Light snow",emoji:"🌨️"},73:{label:"Snow",emoji:"❄️"},
+      75:{label:"Heavy snow",emoji:"❄️"},80:{label:"Rain showers",emoji:"🌦️"},
+      81:{label:"Rain showers",emoji:"🌧️"},82:{label:"Heavy showers",emoji:"⛈️"},
+      95:{label:"Thunderstorm",emoji:"⛈️"},99:{label:"Thunderstorm",emoji:"⛈️"},
     };
 
-    const categoryColors = { food: "#f59e0b", brewery: "#8b5cf6", bar: "#3b82f6", outdoor: "#10b981" };
-    const categoryEmoji = { food: "🍽️", brewery: "🍺", bar: "🥃", outdoor: "🌊" };
-    const card = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "16px 18px", marginBottom: 12 };
+    const categoryColors = { food:"#f59e0b", brewery:"#8b5cf6", bar:"#3b82f6", outdoor:"#10b981" };
+    const categoryEmoji = { food:"🍽️", brewery:"🍺", bar:"🥃", outdoor:"🌊" };
+    const card = { background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:16, padding:"16px 18px", marginBottom:12 };
 
     function generateSuggestions(weather, places) {
-      const tempF = Math.round(weather.temperature * 9 / 5 + 32);
+      const tempF = Math.round(weather.temperature * 9/5 + 32);
       const windMph = Math.round(weather.windspeed * 0.621371);
       const isRainy = [51,53,55,61,63,65,80,81,82,95,99].includes(weather.weathercode);
       const isNice = !isRainy && tempF >= 60 && windMph < 15;
@@ -89,9 +101,9 @@ cat > /mnt/user-data/outputs/places2go.html << 'ENDOFFILE'
 
       const weatherReason = (cat) => {
         if (cat === "outdoor") return isNice ? "Beautiful day for it — get outside and enjoy!" : isCold ? "Bundle up and make it an adventure!" : isRainy ? "If you brave the rain, this one's worth it." : "A solid outdoor pick for today.";
-        if (cat === "brewery") return isRainy ? "Perfect rainy day activity — grab a cold one together." : isWindy ? "Stay out of the wind with good drinks." : "Always a great call — relaxed, fun, great conversation.";
+        if (cat === "brewery") return isRainy ? "Perfect rainy day — grab a cold one together." : isWindy ? "Stay out of the wind with good drinks." : "Always a great call — relaxed, fun, great conversation.";
         if (cat === "bar") return isWindy ? "Cozy indoor spot to get out of the wind." : isRainy ? "Stay dry and enjoy some drinks together." : "Low-key and fun — just you two with good vibes.";
-        return isRainy ? "Warm and cozy — perfect for a rainy day." : isCold ? "Great pick for a cold day — good food fixes everything." : "Always a solid choice.";
+        return isRainy ? "Warm and cozy — perfect for a rainy day." : isCold ? "Great pick for a cold day." : "Always a solid choice.";
       };
 
       const scoredList = notVisited.map(p => ({
@@ -99,61 +111,60 @@ cat > /mnt/user-data/outputs/places2go.html << 'ENDOFFILE'
         emoji: categoryEmoji[p.category] || "📍",
         reason: weatherReason(p.category),
         details: p.notes ? p.notes : "One of your picks — time to check it off!",
-        vibe: p.category === "food" ? "🍽️ Dinner date" : p.category === "brewery" ? "🍺 Brewery night" : p.category === "bar" ? "🥃 Drinks out" : "🌊 Get outside",
-        drive: "On your list", weatherFit: p.category === "outdoor" ? "Outdoor" : "Indoor",
+        vibe: p.category==="food" ? "🍽️ Dinner date" : p.category==="brewery" ? "🍺 Brewery night" : p.category==="bar" ? "🥃 Drinks out" : "🌊 Get outside",
+        drive: "On your list", weatherFit: p.category==="outdoor" ? "Outdoor" : "Indoor",
         onList: true,
-        score: (Math.random() * 2) + (isNice && p.category === "outdoor" ? 4 : 0) + ((isRainy || isCold || isWindy) && p.category !== "outdoor" ? 3 : 0) + (p.favorite ? 2 : 0) + (p.category === "food" ? 1 : 0),
+        score: (Math.random()*2) + (isNice && p.category==="outdoor" ? 4:0) + ((isRainy||isCold||isWindy) && p.category!=="outdoor" ? 3:0) + (p.favorite ? 2:0) + (p.category==="food" ? 1:0),
       }));
 
       const scoredBonus = bonusSpots.map(b => ({
         ...b, onList: false,
-        score: (Math.random() * 3) + (isNice && b.weatherFit === "Outdoor" ? 3 : 0) + ((isRainy || isCold || isWindy) && b.weatherFit === "Indoor" ? 3 : 0) + (b.weatherFit === "Either" ? 1.5 : 0),
+        score: (Math.random()*3) + (isNice && b.weatherFit==="Outdoor" ? 3:0) + ((isRainy||isCold||isWindy) && b.weatherFit==="Indoor" ? 3:0) + (b.weatherFit==="Either" ? 1.5:0),
       }));
 
-      const topList = scoredList.sort((a,b) => b.score - a.score).slice(0, 3);
-      const topBonus = scoredBonus.sort((a,b) => b.score - a.score).slice(0, 3);
-      const result = [];
-      let li = 0, bi = 0;
-      for (let i = 0; i < 5; i++) {
-        if (i % 2 === 0 && li < topList.length) result.push(topList[li++]);
-        else if (bi < topBonus.length) result.push(topBonus[bi++]);
-        else if (li < topList.length) result.push(topList[li++]);
+      const topList = scoredList.sort((a,b)=>b.score-a.score).slice(0,3);
+      const topBonus = scoredBonus.sort((a,b)=>b.score-a.score).slice(0,3);
+      const result = []; let li=0, bi=0;
+      for (let i=0; i<5; i++) {
+        if (i%2===0 && li<topList.length) result.push(topList[li++]);
+        else if (bi<topBonus.length) result.push(topBonus[bi++]);
+        else if (li<topList.length) result.push(topList[li++]);
       }
-      return result.slice(0, 5).map(({ score, ...rest }) => rest);
+      return result.slice(0,5).map(({score,...rest})=>rest);
     }
 
     function WeatherCard({ weather, onRefresh, loading }) {
       if (loading) return (
-        <div style={{ ...card, display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ fontSize: 32, animation: "spin 2s linear infinite" }}>🔄</div>
-          <div style={{ color: "#93c5fd", fontSize: 14 }}>Fetching live weather…</div>
+        <div style={{...card, display:"flex", alignItems:"center", gap:12}}>
+          <div style={{fontSize:32, animation:"spin 2s linear infinite"}}>🔄</div>
+          <div style={{color:"#93c5fd", fontSize:14}}>Fetching live weather…</div>
         </div>
       );
       if (!weather) return null;
-      const wmo = WMO_CODES[weather.weathercode] || { label: "Unknown", emoji: "🌡️" };
-      const tempF = Math.round(weather.temperature * 9 / 5 + 32);
-      const windMph = Math.round(weather.windspeed * 0.621371);
-      const isWindy = windMph > 15, isCold = tempF < 45;
-      const isRainy = [51,53,55,61,63,65,80,81,82,95,99].includes(weather.weathercode);
-      const isNice = !isRainy && tempF >= 60 && !isWindy;
+      const wmo = WMO_CODES[weather.weathercode]||{label:"Unknown",emoji:"🌡️"};
+      const tempF = Math.round(weather.temperature*9/5+32);
+      const windMph = Math.round(weather.windspeed*0.621371);
+      const isWindy=windMph>15, isCold=tempF<45;
+      const isRainy=[51,53,55,61,63,65,80,81,82,95,99].includes(weather.weathercode);
+      const isNice=!isRainy&&tempF>=60&&!isWindy;
       return (
-        <div style={{ ...card, background: isNice ? "linear-gradient(135deg,rgba(16,185,129,0.2),rgba(6,182,212,0.15))" : "linear-gradient(135deg,rgba(59,130,246,0.2),rgba(99,102,241,0.1))", border: isNice ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(99,102,241,0.3)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ fontSize: 42 }}>{wmo.emoji}</div>
+        <div style={{...card, background:isNice?"linear-gradient(135deg,rgba(16,185,129,0.2),rgba(6,182,212,0.15))":"linear-gradient(135deg,rgba(59,130,246,0.2),rgba(99,102,241,0.1))", border:isNice?"1px solid rgba(16,185,129,0.3)":"1px solid rgba(99,102,241,0.3)"}}>
+          <div style={{display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+            <div style={{display:"flex", alignItems:"center", gap:14}}>
+              <div style={{fontSize:42}}>{wmo.emoji}</div>
               <div>
-                <div style={{ fontSize: 10, color: "#93c5fd", fontWeight: 600, letterSpacing: 2, textTransform: "uppercase", marginBottom: 2 }}>Lawrence, MA · Live</div>
-                <div style={{ fontSize: 26, fontWeight: 800, color: "#fff" }}>{tempF}°F</div>
-                <div style={{ fontSize: 13, color: "#c4b5fd" }}>{wmo.label}</div>
+                <div style={{fontSize:10, color:"#93c5fd", fontWeight:600, letterSpacing:2, textTransform:"uppercase", marginBottom:2}}>Lawrence, MA · Live</div>
+                <div style={{fontSize:26, fontWeight:800, color:"#fff"}}>{tempF}°F</div>
+                <div style={{fontSize:13, color:"#c4b5fd"}}>{wmo.label}</div>
               </div>
             </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 6 }}>💨 {windMph} mph<br />💧 {weather.humidity}%</div>
-              <button onClick={onRefresh} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "5px 10px", color: "#a78bfa", fontSize: 11, cursor: "pointer" }}>↻ Refresh</button>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontSize:12, color:"#9ca3af", marginBottom:6}}>💨 {windMph} mph<br/>💧 {weather.humidity}%</div>
+              <button onClick={onRefresh} style={{background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:8, padding:"5px 10px", color:"#a78bfa", fontSize:11, cursor:"pointer"}}>↻ Refresh</button>
             </div>
           </div>
-          {(isWindy || isCold || isRainy) && <div style={{ marginTop: 10, padding: "8px 12px", background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, fontSize: 12, color: "#fca5a5" }}>{isWindy && "⚠️ Windy — outdoor spots may be rough. "}{isCold && "🧥 Bundle up! "}{isRainy && "☔ Rain — lean indoor."}</div>}
-          {isNice && <div style={{ marginTop: 10, padding: "8px 12px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 10, fontSize: 12, color: "#6ee7b7" }}>✨ Perfect weather — outdoor spots are a great call today!</div>}
+          {(isWindy||isCold||isRainy)&&<div style={{marginTop:10, padding:"8px 12px", background:"rgba(239,68,68,0.12)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, fontSize:12, color:"#fca5a5"}}>{isWindy&&"⚠️ Windy — outdoor spots may be rough. "}{isCold&&"🧥 Bundle up! "}{isRainy&&"☔ Rain — lean indoor."}</div>}
+          {isNice&&<div style={{marginTop:10, padding:"8px 12px", background:"rgba(16,185,129,0.12)", border:"1px solid rgba(16,185,129,0.2)", borderRadius:10, fontSize:12, color:"#6ee7b7"}}>✨ Perfect weather — outdoor spots are a great call today!</div>}
         </div>
       );
     }
@@ -161,40 +172,42 @@ cat > /mnt/user-data/outputs/places2go.html << 'ENDOFFILE'
     function SuggestionCard({ suggestion, index, onAddToList }) {
       const [expanded, setExpanded] = useState(false);
       return (
-        <div style={{ ...card, borderLeft: index === 0 ? "3px solid #f59e0b" : "3px solid rgba(255,255,255,0.1)", cursor: "pointer" }} onClick={() => setExpanded(!expanded)}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexWrap: "wrap" }}>
-                {index === 0 && <span style={{ background: "linear-gradient(90deg,#f59e0b,#ef4444)", borderRadius: 20, padding: "1px 8px", fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: "#fff" }}>✦ Top Pick</span>}
-                {suggestion.onList && <span style={{ background: "rgba(139,92,246,0.25)", border: "1px solid rgba(139,92,246,0.4)", borderRadius: 20, padding: "1px 8px", fontSize: 9, fontWeight: 700, color: "#c4b5fd" }}>On your list</span>}
+        <div style={{...card, borderLeft:index===0?"3px solid #f59e0b":"3px solid rgba(255,255,255,0.1)", cursor:"pointer"}} onClick={()=>setExpanded(!expanded)}>
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start"}}>
+            <div style={{flex:1}}>
+              <div style={{display:"flex", alignItems:"center", gap:6, marginBottom:4, flexWrap:"wrap"}}>
+                {index===0&&<span style={{background:"linear-gradient(90deg,#f59e0b,#ef4444)", borderRadius:20, padding:"1px 8px", fontSize:9, fontWeight:800, letterSpacing:1.5, textTransform:"uppercase", color:"#fff"}}>✦ Top Pick</span>}
+                {suggestion.onList&&<span style={{background:"rgba(139,92,246,0.25)", border:"1px solid rgba(139,92,246,0.4)", borderRadius:20, padding:"1px 8px", fontSize:9, fontWeight:700, color:"#c4b5fd"}}>On your list</span>}
               </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>{suggestion.name}</div>
-              <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>{suggestion.location}</div>
+              <div style={{fontSize:16, fontWeight:800, color:"#fff", lineHeight:1.2}}>{suggestion.name}</div>
+              <div style={{fontSize:12, color:"#9ca3af", marginTop:2}}>{suggestion.location}</div>
             </div>
-            <div style={{ fontSize: 22, marginLeft: 10 }}>{suggestion.emoji}</div>
+            <div style={{fontSize:22, marginLeft:10}}>{suggestion.emoji}</div>
           </div>
-          <div style={{ fontSize: 13, color: "#d1d5db", marginTop: 8, lineHeight: 1.6 }}>{suggestion.reason}</div>
-          {expanded && suggestion.details && <div style={{ marginTop: 10, padding: "10px 12px", background: "rgba(255,255,255,0.04)", borderRadius: 10, fontSize: 12, color: "#c4b5fd", lineHeight: 1.7 }}>{suggestion.details}</div>}
-          <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
-            {[suggestion.vibe, suggestion.drive, suggestion.weatherFit].filter(Boolean).map((tag, i) => (
-              <span key={i} style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.25)", borderRadius: 20, padding: "3px 9px", fontSize: 11, color: "#c4b5fd" }}>{tag}</span>
+          <div style={{fontSize:13, color:"#d1d5db", marginTop:8, lineHeight:1.6}}>{suggestion.reason}</div>
+          {expanded&&suggestion.details&&<div style={{marginTop:10, padding:"10px 12px", background:"rgba(255,255,255,0.04)", borderRadius:10, fontSize:12, color:"#c4b5fd", lineHeight:1.7}}>{suggestion.details}</div>}
+          <div style={{display:"flex", gap:6, marginTop:10, flexWrap:"wrap", alignItems:"center"}}>
+            {[suggestion.vibe, suggestion.drive, suggestion.weatherFit].filter(Boolean).map((tag,i)=>(
+              <span key={i} style={{background:"rgba(139,92,246,0.15)", border:"1px solid rgba(139,92,246,0.25)", borderRadius:20, padding:"3px 9px", fontSize:11, color:"#c4b5fd"}}>{tag}</span>
             ))}
-            <span style={{ marginLeft: "auto", fontSize: 11, color: "#6b7280" }}>{expanded ? "▲ less" : "▼ more"}</span>
+            <span style={{marginLeft:"auto", fontSize:11, color:"#6b7280"}}>{expanded?"▲ less":"▼ more"}</span>
           </div>
-          {!suggestion.onList && <button onClick={e => { e.stopPropagation(); onAddToList(suggestion); }} style={{ marginTop: 10, width: "100%", padding: "8px", background: "rgba(139,92,246,0.15)", border: "1px dashed rgba(139,92,246,0.4)", borderRadius: 10, color: "#a78bfa", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>+ Add to your list</button>}
+          {!suggestion.onList&&<button onClick={e=>{e.stopPropagation();onAddToList(suggestion);}} style={{marginTop:10, width:"100%", padding:"8px", background:"rgba(139,92,246,0.15)", border:"1px dashed rgba(139,92,246,0.4)", borderRadius:10, color:"#a78bfa", fontSize:12, fontWeight:600, cursor:"pointer"}}>+ Add to your list</button>}
         </div>
       );
     }
 
     function App() {
-      const [places, setPlaces] = useState(initialPlaces);
+      const [places, setPlaces] = useState(() => loadPlaces());
       const [activeTab, setActiveTab] = useState("today");
       const [weather, setWeather] = useState(null);
       const [weatherLoading, setWeatherLoading] = useState(true);
       const [suggestions, setSuggestions] = useState([]);
       const [filter, setFilter] = useState("all");
       const [adding, setAdding] = useState(false);
-      const [newPlace, setNewPlace] = useState({ name: "", location: "", category: "food" });
+      const [newPlace, setNewPlace] = useState({name:"", location:"", category:"food"});
+
+      useEffect(() => { savePlaces(places); }, [places]);
 
       const fetchWeather = useCallback(async () => {
         setWeatherLoading(true);
@@ -202,137 +215,149 @@ cat > /mnt/user-data/outputs/places2go.html << 'ENDOFFILE'
           const res = await fetch(`${OPEN_METEO_URL}?latitude=${LAT}&longitude=${LON}&current_weather=true&hourly=relativehumidity_2m&temperature_unit=celsius&windspeed_unit=kmh&timezone=America%2FNew_York`);
           const data = await res.json();
           const cw = data.current_weather;
-          const idx = data.hourly.time.findIndex(t => t === cw.time.slice(0, 13) + ":00");
-          const w = { ...cw, humidity: idx >= 0 ? data.hourly.relativehumidity_2m[idx] : 60 };
+          const idx = data.hourly.time.findIndex(t => t===cw.time.slice(0,13)+":00");
+          const w = {...cw, humidity: idx>=0 ? data.hourly.relativehumidity_2m[idx] : 60};
           setWeather(w);
           setSuggestions(generateSuggestions(w, places));
-        } catch (e) { setWeather(null); }
+        } catch(e) { setWeather(null); }
         setWeatherLoading(false);
       }, [places]);
 
       useEffect(() => { fetchWeather(); }, []);
 
-      const visited = places.filter(p => p.visited);
-      const notVisited = places.filter(p => !p.visited);
-      const filtered = filter === "all" ? notVisited : notVisited.filter(p => p.category === filter);
-      const inputStyle = { width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "#fff", fontSize: 14, marginBottom: 8, fontFamily: "inherit" };
+      const visited = places.filter(p=>p.visited);
+      const notVisited = places.filter(p=>!p.visited);
+      const filtered = filter==="all" ? notVisited : notVisited.filter(p=>p.category===filter);
+      const inputStyle = {width:"100%", padding:"10px 12px", borderRadius:10, border:"1px solid rgba(255,255,255,0.12)", background:"rgba(255,255,255,0.06)", color:"#fff", fontSize:14, marginBottom:8, fontFamily:"inherit"};
 
-      const addToList = (s) => setPlaces(prev => [...prev, { id: Date.now(), name: s.name, location: s.location, visited: false, category: "food", notes: "Added from suggestions", onList: true }]);
-      const toggleVisited = (id) => setPlaces(prev => prev.map(p => p.id === id ? { ...p, visited: !p.visited } : p));
+      const addToList = (s) => {
+        const updated = [...places, {id:Date.now(), name:s.name, location:s.location, visited:false, category:"food", notes:"Added from suggestions", onList:true}];
+        setPlaces(updated);
+        if (weather) setSuggestions(generateSuggestions(weather, updated));
+      };
+
+      const toggleVisited = (id) => {
+        const updated = places.map(p => p.id===id ? {...p, visited:!p.visited} : p);
+        setPlaces(updated);
+        if (weather) setSuggestions(generateSuggestions(weather, updated));
+      };
+
       const addPlace = () => {
         if (!newPlace.name.trim()) return;
-        setPlaces(prev => [...prev, { ...newPlace, id: Date.now(), visited: false, notes: "", onList: true }]);
-        setNewPlace({ name: "", location: "", category: "food" });
+        const updated = [...places, {...newPlace, id:Date.now(), visited:false, notes:"", onList:true}];
+        setPlaces(updated);
+        if (weather) setSuggestions(generateSuggestions(weather, updated));
+        setNewPlace({name:"", location:"", category:"food"});
         setAdding(false);
       };
 
       return (
-        <div style={{ minHeight: "100vh", background: "linear-gradient(160deg,#0d0d1a 0%,#1a1035 40%,#0d1a2e 100%)", fontFamily: "'Palatino Linotype',Palatino,serif", color: "#fff", paddingBottom: 80 }}>
-          <div style={{ padding: "36px 22px 0", textAlign: "center" }}>
-            <div style={{ fontSize: 10, letterSpacing: 6, color: "#7c6fa0", textTransform: "uppercase", marginBottom: 10 }}>Your Adventure Log</div>
-            <h1 style={{ fontSize: 34, fontWeight: 700, margin: 0, background: "linear-gradient(100deg,#f9a8d4 0%,#c084fc 50%,#7dd3fc 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Places 2 Go 💕</h1>
-            <div style={{ marginTop: 10, display: "flex", justifyContent: "center", gap: 18, fontSize: 12 }}>
-              <span style={{ color: "#6ee7b7" }}>✅ {visited.length} visited</span>
-              <span style={{ color: "#4b4b6a" }}>·</span>
-              <span style={{ color: "#c4b5fd" }}>📍 {notVisited.length} to explore</span>
+        <div style={{minHeight:"100vh", background:"linear-gradient(160deg,#0d0d1a 0%,#1a1035 40%,#0d1a2e 100%)", fontFamily:"'Palatino Linotype',Palatino,serif", color:"#fff", paddingBottom:80}}>
+          <div style={{padding:"36px 22px 0", textAlign:"center"}}>
+            <div style={{fontSize:10, letterSpacing:6, color:"#7c6fa0", textTransform:"uppercase", marginBottom:10}}>Your Adventure Log</div>
+            <h1 style={{fontSize:34, fontWeight:700, margin:0, background:"linear-gradient(100deg,#f9a8d4 0%,#c084fc 50%,#7dd3fc 100%)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}>Places 2 Go 💕</h1>
+            <div style={{marginTop:10, display:"flex", justifyContent:"center", gap:18, fontSize:12}}>
+              <span style={{color:"#6ee7b7"}}>✅ {visited.length} visited</span>
+              <span style={{color:"#4b4b6a"}}>·</span>
+              <span style={{color:"#c4b5fd"}}>📍 {notVisited.length} to explore</span>
             </div>
           </div>
 
-          <div style={{ display: "flex", margin: "22px 16px 0", background: "rgba(255,255,255,0.05)", borderRadius: 14, padding: 3, gap: 2 }}>
-            {[{ key: "today", label: "✦ Today" }, { key: "list", label: "🗺️ List" }, { key: "visited", label: "✅ Done" }].map(tab => (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{ flex: 1, padding: "11px 4px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700, background: activeTab === tab.key ? "linear-gradient(135deg,#7c3aed,#4f46e5)" : "transparent", color: activeTab === tab.key ? "#fff" : "#6b6b8a" }}>{tab.label}</button>
+          <div style={{display:"flex", margin:"22px 16px 0", background:"rgba(255,255,255,0.05)", borderRadius:14, padding:3, gap:2}}>
+            {[{key:"today",label:"✦ Today"},{key:"list",label:"🗺️ List"},{key:"visited",label:"✅ Done"}].map(tab=>(
+              <button key={tab.key} onClick={()=>setActiveTab(tab.key)} style={{flex:1, padding:"11px 4px", borderRadius:12, border:"none", cursor:"pointer", fontSize:13, fontWeight:700, background:activeTab===tab.key?"linear-gradient(135deg,#7c3aed,#4f46e5)":"transparent", color:activeTab===tab.key?"#fff":"#6b6b8a"}}>{tab.label}</button>
             ))}
           </div>
 
-          {activeTab === "today" && (
-            <div style={{ padding: "18px 16px 0" }}>
-              <WeatherCard weather={weather} onRefresh={() => { setSuggestions([]); fetchWeather(); }} loading={weatherLoading} />
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                <div style={{ fontSize: 10, letterSpacing: 4, color: "#7c6fa0", textTransform: "uppercase" }}>✦ Date Ideas For Today</div>
-                {weather && <button onClick={() => setSuggestions(generateSuggestions(weather, places))} style={{ background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.35)", borderRadius: 8, padding: "4px 10px", color: "#c4b5fd", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>↻ New ideas</button>}
+          {activeTab==="today"&&(
+            <div style={{padding:"18px 16px 0"}}>
+              <WeatherCard weather={weather} onRefresh={()=>{setSuggestions([]);fetchWeather();}} loading={weatherLoading}/>
+              <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14}}>
+                <div style={{fontSize:10, letterSpacing:4, color:"#7c6fa0", textTransform:"uppercase"}}>✦ Date Ideas For Today</div>
+                {weather&&<button onClick={()=>setSuggestions(generateSuggestions(weather,places))} style={{background:"rgba(124,58,237,0.2)", border:"1px solid rgba(124,58,237,0.35)", borderRadius:8, padding:"4px 10px", color:"#c4b5fd", fontSize:11, cursor:"pointer", fontWeight:600}}>↻ New ideas</button>}
               </div>
-              {weatherLoading && (
-                <div style={{ ...card, textAlign: "center", padding: "28px 16px" }}>
-                  <div className="shimmer" style={{ fontSize: 28, marginBottom: 8 }}>✨</div>
-                  <div style={{ color: "#9ca3af", fontSize: 13 }}>Finding the best date ideas<br />for today's weather…</div>
-                  {[1,2,3].map(i => <div key={i} className="shimmer" style={{ height: 12, borderRadius: 8, background: "rgba(255,255,255,0.07)", marginTop: 12, width: i === 3 ? "60%" : "100%", marginLeft: i === 3 ? "auto" : 0, marginRight: i === 3 ? "auto" : 0 }} />)}
+              {weatherLoading&&(
+                <div style={{...card, textAlign:"center", padding:"28px 16px"}}>
+                  <div className="shimmer" style={{fontSize:28, marginBottom:8}}>✨</div>
+                  <div style={{color:"#9ca3af", fontSize:13}}>Finding the best date ideas<br/>for today's weather…</div>
+                  {[1,2,3].map(i=><div key={i} className="shimmer" style={{height:12, borderRadius:8, background:"rgba(255,255,255,0.07)", marginTop:12, width:i===3?"60%":"100%", marginLeft:i===3?"auto":0, marginRight:i===3?"auto":0}}/>)}
                 </div>
               )}
-              {!weatherLoading && suggestions.map((s, i) => (
-                <div key={`${s.name}-${i}`} className="suggestion-enter" style={{ animationDelay: `${i * 0.08}s` }}>
-                  <SuggestionCard suggestion={s} index={i} onAddToList={addToList} />
+              {!weatherLoading&&suggestions.map((s,i)=>(
+                <div key={`${s.name}-${i}`} className="suggestion-enter" style={{animationDelay:`${i*0.08}s`}}>
+                  <SuggestionCard suggestion={s} index={i} onAddToList={addToList}/>
                 </div>
               ))}
             </div>
           )}
 
-          {activeTab === "list" && (
-            <div style={{ padding: "18px 16px 0" }}>
-              <div style={{ display: "flex", gap: 7, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-                {["all", "food", "brewery", "bar", "outdoor"].map(f => (
-                  <button key={f} onClick={() => setFilter(f)} style={{ padding: "6px 13px", borderRadius: 20, border: "1px solid rgba(255,255,255,0.12)", background: filter === f ? (categoryColors[f] || "#7c3aed") : "transparent", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
-                    {f === "all" ? "All" : `${categoryEmoji[f]} ${f}`}
+          {activeTab==="list"&&(
+            <div style={{padding:"18px 16px 0"}}>
+              <div style={{display:"flex", gap:7, marginBottom:16, overflowX:"auto", paddingBottom:4}}>
+                {["all","food","brewery","bar","outdoor"].map(f=>(
+                  <button key={f} onClick={()=>setFilter(f)} style={{padding:"6px 13px", borderRadius:20, border:"1px solid rgba(255,255,255,0.12)", background:filter===f?(categoryColors[f]||"#7c3aed"):"transparent", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap"}}>
+                    {f==="all"?"All":`${categoryEmoji[f]} ${f}`}
                   </button>
                 ))}
               </div>
-              {filtered.map(place => (
-                <div key={place.id} style={{ ...card, borderLeft: `3px solid ${categoryColors[place.category] || "#6b7280"}`, display: "flex", alignItems: "center", gap: 12 }}>
-                  <button onClick={() => toggleVisited(place.id)} style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.25)", background: "transparent", cursor: "pointer", flexShrink: 0, fontSize: 16, color: "#6b7280" }}>○</button>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>{place.name} {place.favorite ? "❤️" : ""}</div>
-                    <div style={{ fontSize: 12, color: "#6b7280" }}>{place.location}</div>
-                    {place.notes && <div style={{ fontSize: 11, color: "#a78bfa", marginTop: 2 }}>{place.notes}</div>}
+              {filtered.map(place=>(
+                <div key={place.id} style={{...card, borderLeft:`3px solid ${categoryColors[place.category]||"#6b7280"}`, display:"flex", alignItems:"center", gap:12}}>
+                  <button onClick={()=>toggleVisited(place.id)} style={{width:28, height:28, borderRadius:"50%", border:"2px solid rgba(255,255,255,0.25)", background:"transparent", cursor:"pointer", flexShrink:0, fontSize:16, color:"#6b7280"}}>○</button>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700, fontSize:15, color:"#fff"}}>{place.name} {place.favorite?"❤️":""}</div>
+                    <div style={{fontSize:12, color:"#6b7280"}}>{place.location}</div>
+                    {place.notes&&<div style={{fontSize:11, color:"#a78bfa", marginTop:2}}>{place.notes}</div>}
                   </div>
-                  <span style={{ fontSize: 16 }}>{categoryEmoji[place.category]}</span>
+                  <span style={{fontSize:16}}>{categoryEmoji[place.category]}</span>
                 </div>
               ))}
-              {!adding ? (
-                <button onClick={() => setAdding(true)} style={{ width: "100%", padding: "14px", background: "rgba(124,58,237,0.1)", border: "2px dashed rgba(124,58,237,0.35)", borderRadius: 14, color: "#a78bfa", fontSize: 14, fontWeight: 600, cursor: "pointer", marginTop: 4 }}>+ Add a place</button>
-              ) : (
-                <div style={{ ...card, border: "1px solid rgba(124,58,237,0.4)", marginTop: 4 }}>
-                  <input placeholder="Place name" value={newPlace.name} onChange={e => setNewPlace({ ...newPlace, name: e.target.value })} style={inputStyle} />
-                  <input placeholder="City, State" value={newPlace.location} onChange={e => setNewPlace({ ...newPlace, location: e.target.value })} style={inputStyle} />
-                  <select value={newPlace.category} onChange={e => setNewPlace({ ...newPlace, category: e.target.value })} style={{ ...inputStyle, background: "#12102a", marginBottom: 12 }}>
+              {!adding?(
+                <button onClick={()=>setAdding(true)} style={{width:"100%", padding:"14px", background:"rgba(124,58,237,0.1)", border:"2px dashed rgba(124,58,237,0.35)", borderRadius:14, color:"#a78bfa", fontSize:14, fontWeight:600, cursor:"pointer", marginTop:4}}>+ Add a place</button>
+              ):(
+                <div style={{...card, border:"1px solid rgba(124,58,237,0.4)", marginTop:4}}>
+                  <input placeholder="Place name" value={newPlace.name} onChange={e=>setNewPlace({...newPlace,name:e.target.value})} style={inputStyle}/>
+                  <input placeholder="City, State" value={newPlace.location} onChange={e=>setNewPlace({...newPlace,location:e.target.value})} style={inputStyle}/>
+                  <select value={newPlace.category} onChange={e=>setNewPlace({...newPlace,category:e.target.value})} style={{...inputStyle, background:"#12102a", marginBottom:12}}>
                     <option value="food">🍽️ Food</option>
                     <option value="brewery">🍺 Brewery</option>
                     <option value="bar">🥃 Bar</option>
                     <option value="outdoor">🌊 Outdoor</option>
                   </select>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={addPlace} style={{ flex: 1, padding: "10px", background: "linear-gradient(135deg,#7c3aed,#4f46e5)", border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Add</button>
-                    <button onClick={() => setAdding(false)} style={{ flex: 1, padding: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#6b7280", fontSize: 14, cursor: "pointer" }}>Cancel</button>
+                  <div style={{display:"flex", gap:8}}>
+                    <button onClick={addPlace} style={{flex:1, padding:"10px", background:"linear-gradient(135deg,#7c3aed,#4f46e5)", border:"none", borderRadius:10, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer"}}>Add</button>
+                    <button onClick={()=>setAdding(false)} style={{flex:1, padding:"10px", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.12)", borderRadius:10, color:"#6b7280", fontSize:14, cursor:"pointer"}}>Cancel</button>
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {activeTab === "visited" && (
-            <div style={{ padding: "18px 16px 0" }}>
-              <div style={{ fontSize: 10, letterSpacing: 4, color: "#7c6fa0", textTransform: "uppercase", marginBottom: 14 }}>Places explored together</div>
-              {visited.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "48px 24px", color: "#4b4b6a" }}>
-                  <div style={{ fontSize: 36, marginBottom: 12 }}>🗺️</div>
-                  <div style={{ fontSize: 15 }}>No visits logged yet</div>
-                  <div style={{ fontSize: 13, marginTop: 6 }}>Tap ○ on any place to check it off!</div>
+          {activeTab==="visited"&&(
+            <div style={{padding:"18px 16px 0"}}>
+              <div style={{fontSize:10, letterSpacing:4, color:"#7c6fa0", textTransform:"uppercase", marginBottom:14}}>Places explored together</div>
+              {visited.length===0?(
+                <div style={{textAlign:"center", padding:"48px 24px", color:"#4b4b6a"}}>
+                  <div style={{fontSize:36, marginBottom:12}}>🗺️</div>
+                  <div style={{fontSize:15}}>No visits logged yet</div>
+                  <div style={{fontSize:13, marginTop:6}}>Tap ○ on any place to check it off!</div>
                 </div>
-              ) : visited.map(place => (
-                <div key={place.id} style={{ ...card, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)", display: "flex", alignItems: "center", gap: 12 }}>
-                  <span style={{ fontSize: 20 }}>✅</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15, textDecoration: "line-through", color: "#6b7280" }}>{place.name}</div>
-                    <div style={{ fontSize: 12, color: "#4ade80", marginTop: 2 }}>{place.location}</div>
+              ):visited.map(place=>(
+                <div key={place.id} style={{...card, background:"rgba(16,185,129,0.06)", border:"1px solid rgba(16,185,129,0.15)", display:"flex", alignItems:"center", gap:12}}>
+                  <span style={{fontSize:20}}>✅</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700, fontSize:15, textDecoration:"line-through", color:"#6b7280"}}>{place.name}</div>
+                    <div style={{fontSize:12, color:"#4ade80", marginTop:2}}>{place.location}</div>
                   </div>
-                  <button onClick={() => toggleVisited(place.id)} style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 8, padding: "4px 10px", color: "#fca5a5", fontSize: 11, cursor: "pointer" }}>Undo</button>
+                  <button onClick={()=>toggleVisited(place.id)} style={{background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.25)", borderRadius:8, padding:"4px 10px", color:"#fca5a5", fontSize:11, cursor:"pointer"}}>Undo</button>
                 </div>
               ))}
-              {visited.length > 0 && (
-                <div style={{ ...card, textAlign: "center", marginTop: 12 }}>
-                  <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 10 }}>{visited.length} of {places.length} places explored 💕</div>
-                  <div style={{ height: 8, borderRadius: 10, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${(visited.length / places.length) * 100}%`, background: "linear-gradient(90deg,#7c3aed,#ec4899,#f59e0b)", borderRadius: 10, transition: "width 0.5s ease" }} />
+              {visited.length>0&&(
+                <div style={{...card, textAlign:"center", marginTop:12}}>
+                  <div style={{fontSize:13, color:"#6b7280", marginBottom:10}}>{visited.length} of {places.length} places explored 💕</div>
+                  <div style={{height:8, borderRadius:10, background:"rgba(255,255,255,0.07)", overflow:"hidden"}}>
+                    <div style={{height:"100%", width:`${(visited.length/places.length)*100}%`, background:"linear-gradient(90deg,#7c3aed,#ec4899,#f59e0b)", borderRadius:10, transition:"width 0.5s ease"}}/>
                   </div>
-                  <div style={{ fontSize: 11, color: "#4b4b6a", marginTop: 8 }}>{Math.round((visited.length / places.length) * 100)}% of the adventure complete</div>
+                  <div style={{fontSize:11, color:"#4b4b6a", marginTop:8}}>{Math.round((visited.length/places.length)*100)}% of the adventure complete</div>
                 </div>
               )}
             </div>
@@ -341,8 +366,7 @@ cat > /mnt/user-data/outputs/places2go.html << 'ENDOFFILE'
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
   </script>
 </body>
 </html>
-ENDOFFILE
