@@ -1,3 +1,4 @@
+cat > /mnt/user-data/outputs/places2go.html << 'ENDOFFILE'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,7 +17,7 @@
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .suggestion-enter { animation: fadeUp 0.4s ease forwards; }
+    .suggestion-enter { animation: fadeUp 0.4s ease forwards; opacity: 0; }
     .shimmer { animation: pulse 1.5s ease infinite; }
     input::placeholder { color: #4b4b6a; }
     ::-webkit-scrollbar { display: none; }
@@ -24,7 +25,6 @@
 </head>
 <body>
   <div id="root"></div>
-
   <script type="text/babel">
     const { useState, useEffect, useCallback } = React;
 
@@ -34,8 +34,8 @@
 
     const initialPlaces = [
       { id: 1, name: "603 BBQ", location: "Concord, NH", visited: false, category: "food", notes: "", onList: true },
-      { id: 2, name: "Big Pig", location: "Ipswich, MA", visited: true, category: "food", notes: "Already been! ✓", onList: true },
-      { id: 3, name: "Harpoon Brewery", location: "Manchester, NH", visited: false, category: "brewery", notes: "❤️ Top pick!", favorite: true, onList: true },
+      { id: 2, name: "Big Pig", location: "Ipswich, MA", visited: true, category: "food", notes: "Already been!", onList: true },
+      { id: 3, name: "Harpoon Brewery", location: "Manchester, NH", visited: false, category: "brewery", notes: "Top pick!", favorite: true, onList: true },
       { id: 4, name: "Anchor Pub & Grille", location: "Beverly, MA", visited: false, category: "bar", notes: "", onList: true },
       { id: 5, name: "Nantasket Beach", location: "Hull, MA", visited: false, category: "outdoor", notes: "", onList: true },
       { id: 6, name: "Humarock Beach", location: "Scituate, MA", visited: false, category: "outdoor", notes: "", onList: true },
@@ -44,6 +44,21 @@
       { id: 9, name: "Ricochet Pizza", location: "Derry, NH", visited: false, category: "food", notes: "", onList: true },
       { id: 10, name: "Rusty Can", location: "Byfield, MA", visited: false, category: "bar", notes: "", onList: true },
       { id: 11, name: "Carmine", location: "Newburyport, MA", visited: false, category: "food", notes: "", onList: true },
+    ];
+
+    const bonusSpots = [
+      { name: "Flatbread Company", location: "Amesbury, MA", emoji: "🍕", category: "food", vibe: "🍷 Cozy date night", drive: "~25 min", details: "Wood-fired pizza in a warm, rustic space. Great for a chill dinner with good vibes.", weatherFit: "Indoor", reason: "Cozy wood-fired pizza spot — perfect for a relaxed night out." },
+      { name: "Newburyport Brewing", location: "Newburyport, MA", emoji: "🍺", category: "brewery", vibe: "🍺 Laid-back fun", drive: "~25 min", details: "Local craft brewery with a great taproom. Casual, fun, always rotating taps.", weatherFit: "Indoor", reason: "Local craft brewery with a great vibe — grab a pint and hang out." },
+      { name: "Plum Island", location: "Newburyport, MA", emoji: "🌊", category: "outdoor", vibe: "🌅 Scenic & romantic", drive: "~30 min", details: "Beautiful barrier island beach. Even in cooler weather, a walk here at sunset is stunning.", weatherFit: "Outdoor", reason: "Beautiful barrier island — a walk here feels like an escape from everything." },
+      { name: "The Deck Restaurant", location: "Salisbury, MA", emoji: "🦞", category: "food", vibe: "🦞 New England vibes", drive: "~25 min", details: "Right on the water, great seafood and casual atmosphere.", weatherFit: "Either", reason: "Waterfront seafood spot with great New England vibes." },
+      { name: "Lowell Arts & Food", location: "Lowell, MA", emoji: "🏙️", category: "food", vibe: "🏙️ Urban explore", drive: "~20 min", details: "Lowell has a cool arts scene and tons of great restaurants. Fun to just wander and discover.", weatherFit: "Either", reason: "Lowell is underrated — great food scene and cool stuff to discover together." },
+      { name: "Maudslay State Park", location: "Newburyport, MA", emoji: "🌿", category: "outdoor", vibe: "🌿 Peaceful walk", drive: "~25 min", details: "Beautiful riverside trails through gardens and forest. Magical in any season.", weatherFit: "Outdoor", reason: "Gorgeous riverside trails — peaceful, pretty, and totally free." },
+      { name: "Amesbury Sports Park", location: "Amesbury, MA", emoji: "🎳", category: "food", vibe: "😂 Fun & goofy", drive: "~25 min", details: "Bowling, laser tag, arcade games. Great for a playful date when you want to laugh.", weatherFit: "Indoor", reason: "Bowling and arcade games — fun, goofy, and a great way to laugh together." },
+      { name: "Salem Historic District", location: "Salem, MA", emoji: "🧙", category: "food", vibe: "✨ Quirky & fun", drive: "~40 min", details: "Salem is wild to explore — great restaurants, spooky history, unique shops. She'll love it.", weatherFit: "Either", reason: "Salem is always a great adventure — history, food, and a totally unique vibe." },
+      { name: "Smuttynose Brewing", location: "Hampton, NH", emoji: "🍺", category: "brewery", vibe: "🍺 Beer garden fun", drive: "~35 min", details: "Big NH brewery with a great outdoor space and food. Really fun afternoon spot.", weatherFit: "Either", reason: "Big NH brewery with awesome outdoor space — great afternoon date." },
+      { name: "Hampton Beach Boardwalk", location: "Hampton, NH", emoji: "🎡", category: "outdoor", vibe: "🎡 Nostalgic fun", drive: "~40 min", details: "Classic New England beach boardwalk. Arcades, food, ocean views — always a good time.", weatherFit: "Either", reason: "Classic boardwalk energy — arcades, food, ocean air, good memories." },
+      { name: "The Poynt", location: "Salisbury, MA", emoji: "🍔", category: "bar", vibe: "🎯 Casual hangout", drive: "~25 min", details: "Great bar with good food right near the beach.", weatherFit: "Indoor", reason: "Solid bar near the beach — easy, fun, no fuss." },
+      { name: "Colby Farm Sunflowers", location: "Newbury, MA", emoji: "🌻", category: "outdoor", vibe: "📸 Cute & memorable", drive: "~25 min", details: "Famous sunflower fields in season. Even off-season it's a beautiful scenic drive.", weatherFit: "Outdoor", reason: "Famous sunflower fields — one of those spots that just makes for a great memory." },
     ];
 
     const WMO_CODES = {
@@ -61,12 +76,51 @@
 
     const categoryColors = { food: "#f59e0b", brewery: "#8b5cf6", bar: "#3b82f6", outdoor: "#10b981" };
     const categoryEmoji = { food: "🍽️", brewery: "🍺", bar: "🥃", outdoor: "🌊" };
+    const card = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "16px 18px", marginBottom: 12 };
 
-    const card = {
-      background: "rgba(255,255,255,0.05)",
-      border: "1px solid rgba(255,255,255,0.08)",
-      borderRadius: 16, padding: "16px 18px", marginBottom: 12,
-    };
+    function generateSuggestions(weather, places) {
+      const tempF = Math.round(weather.temperature * 9 / 5 + 32);
+      const windMph = Math.round(weather.windspeed * 0.621371);
+      const isRainy = [51,53,55,61,63,65,80,81,82,95,99].includes(weather.weathercode);
+      const isNice = !isRainy && tempF >= 60 && windMph < 15;
+      const isCold = tempF < 45;
+      const isWindy = windMph > 15;
+      const notVisited = places.filter(p => !p.visited);
+
+      const weatherReason = (cat) => {
+        if (cat === "outdoor") return isNice ? "Beautiful day for it — get outside and enjoy!" : isCold ? "Bundle up and make it an adventure!" : isRainy ? "If you brave the rain, this one's worth it." : "A solid outdoor pick for today.";
+        if (cat === "brewery") return isRainy ? "Perfect rainy day activity — grab a cold one together." : isWindy ? "Stay out of the wind with good drinks." : "Always a great call — relaxed, fun, great conversation.";
+        if (cat === "bar") return isWindy ? "Cozy indoor spot to get out of the wind." : isRainy ? "Stay dry and enjoy some drinks together." : "Low-key and fun — just you two with good vibes.";
+        return isRainy ? "Warm and cozy — perfect for a rainy day." : isCold ? "Great pick for a cold day — good food fixes everything." : "Always a solid choice.";
+      };
+
+      const scoredList = notVisited.map(p => ({
+        name: p.name, location: p.location,
+        emoji: categoryEmoji[p.category] || "📍",
+        reason: weatherReason(p.category),
+        details: p.notes ? p.notes : "One of your picks — time to check it off!",
+        vibe: p.category === "food" ? "🍽️ Dinner date" : p.category === "brewery" ? "🍺 Brewery night" : p.category === "bar" ? "🥃 Drinks out" : "🌊 Get outside",
+        drive: "On your list", weatherFit: p.category === "outdoor" ? "Outdoor" : "Indoor",
+        onList: true,
+        score: (Math.random() * 2) + (isNice && p.category === "outdoor" ? 4 : 0) + ((isRainy || isCold || isWindy) && p.category !== "outdoor" ? 3 : 0) + (p.favorite ? 2 : 0) + (p.category === "food" ? 1 : 0),
+      }));
+
+      const scoredBonus = bonusSpots.map(b => ({
+        ...b, onList: false,
+        score: (Math.random() * 3) + (isNice && b.weatherFit === "Outdoor" ? 3 : 0) + ((isRainy || isCold || isWindy) && b.weatherFit === "Indoor" ? 3 : 0) + (b.weatherFit === "Either" ? 1.5 : 0),
+      }));
+
+      const topList = scoredList.sort((a,b) => b.score - a.score).slice(0, 3);
+      const topBonus = scoredBonus.sort((a,b) => b.score - a.score).slice(0, 3);
+      const result = [];
+      let li = 0, bi = 0;
+      for (let i = 0; i < 5; i++) {
+        if (i % 2 === 0 && li < topList.length) result.push(topList[li++]);
+        else if (bi < topBonus.length) result.push(topBonus[bi++]);
+        else if (li < topList.length) result.push(topList[li++]);
+      }
+      return result.slice(0, 5).map(({ score, ...rest }) => rest);
+    }
 
     function WeatherCard({ weather, onRefresh, loading }) {
       if (loading) return (
@@ -79,18 +133,11 @@
       const wmo = WMO_CODES[weather.weathercode] || { label: "Unknown", emoji: "🌡️" };
       const tempF = Math.round(weather.temperature * 9 / 5 + 32);
       const windMph = Math.round(weather.windspeed * 0.621371);
-      const isWindy = windMph > 15;
-      const isCold = tempF < 45;
+      const isWindy = windMph > 15, isCold = tempF < 45;
       const isRainy = [51,53,55,61,63,65,80,81,82,95,99].includes(weather.weathercode);
       const isNice = !isRainy && tempF >= 60 && !isWindy;
       return (
-        <div style={{
-          ...card,
-          background: isNice
-            ? "linear-gradient(135deg, rgba(16,185,129,0.2), rgba(6,182,212,0.15))"
-            : "linear-gradient(135deg, rgba(59,130,246,0.2), rgba(99,102,241,0.1))",
-          border: isNice ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(99,102,241,0.3)",
-        }}>
+        <div style={{ ...card, background: isNice ? "linear-gradient(135deg,rgba(16,185,129,0.2),rgba(6,182,212,0.15))" : "linear-gradient(135deg,rgba(59,130,246,0.2),rgba(99,102,241,0.1))", border: isNice ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(99,102,241,0.3)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <div style={{ fontSize: 42 }}>{wmo.emoji}</div>
@@ -105,16 +152,8 @@
               <button onClick={onRefresh} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "5px 10px", color: "#a78bfa", fontSize: 11, cursor: "pointer" }}>↻ Refresh</button>
             </div>
           </div>
-          {(isWindy || isCold || isRainy) && (
-            <div style={{ marginTop: 10, padding: "8px 12px", background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, fontSize: 12, color: "#fca5a5" }}>
-              {isWindy && "⚠️ Windy — outdoor spots may be rough. "}{isCold && "🧥 Bundle up! "}{isRainy && "☔ Rain — lean indoor."}
-            </div>
-          )}
-          {isNice && (
-            <div style={{ marginTop: 10, padding: "8px 12px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 10, fontSize: 12, color: "#6ee7b7" }}>
-              ✨ Perfect weather — outdoor spots are a great call today!
-            </div>
-          )}
+          {(isWindy || isCold || isRainy) && <div style={{ marginTop: 10, padding: "8px 12px", background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, fontSize: 12, color: "#fca5a5" }}>{isWindy && "⚠️ Windy — outdoor spots may be rough. "}{isCold && "🧥 Bundle up! "}{isRainy && "☔ Rain — lean indoor."}</div>}
+          {isNice && <div style={{ marginTop: 10, padding: "8px 12px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 10, fontSize: 12, color: "#6ee7b7" }}>✨ Perfect weather — outdoor spots are a great call today!</div>}
         </div>
       );
     }
@@ -122,12 +161,11 @@
     function SuggestionCard({ suggestion, index, onAddToList }) {
       const [expanded, setExpanded] = useState(false);
       return (
-        <div style={{ ...card, borderLeft: index === 0 ? "3px solid #f59e0b" : "3px solid rgba(255,255,255,0.1)", cursor: "pointer" }}
-          onClick={() => setExpanded(!expanded)}>
+        <div style={{ ...card, borderLeft: index === 0 ? "3px solid #f59e0b" : "3px solid rgba(255,255,255,0.1)", cursor: "pointer" }} onClick={() => setExpanded(!expanded)}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexWrap: "wrap" }}>
-                {index === 0 && <span style={{ background: "linear-gradient(90deg, #f59e0b, #ef4444)", borderRadius: 20, padding: "1px 8px", fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: "#fff" }}>✦ Top Pick</span>}
+                {index === 0 && <span style={{ background: "linear-gradient(90deg,#f59e0b,#ef4444)", borderRadius: 20, padding: "1px 8px", fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: "#fff" }}>✦ Top Pick</span>}
                 {suggestion.onList && <span style={{ background: "rgba(139,92,246,0.25)", border: "1px solid rgba(139,92,246,0.4)", borderRadius: 20, padding: "1px 8px", fontSize: 9, fontWeight: 700, color: "#c4b5fd" }}>On your list</span>}
               </div>
               <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>{suggestion.name}</div>
@@ -136,21 +174,14 @@
             <div style={{ fontSize: 22, marginLeft: 10 }}>{suggestion.emoji}</div>
           </div>
           <div style={{ fontSize: 13, color: "#d1d5db", marginTop: 8, lineHeight: 1.6 }}>{suggestion.reason}</div>
-          {expanded && suggestion.details && (
-            <div style={{ marginTop: 10, padding: "10px 12px", background: "rgba(255,255,255,0.04)", borderRadius: 10, fontSize: 12, color: "#c4b5fd", lineHeight: 1.7 }}>{suggestion.details}</div>
-          )}
+          {expanded && suggestion.details && <div style={{ marginTop: 10, padding: "10px 12px", background: "rgba(255,255,255,0.04)", borderRadius: 10, fontSize: 12, color: "#c4b5fd", lineHeight: 1.7 }}>{suggestion.details}</div>}
           <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
             {[suggestion.vibe, suggestion.drive, suggestion.weatherFit].filter(Boolean).map((tag, i) => (
               <span key={i} style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.25)", borderRadius: 20, padding: "3px 9px", fontSize: 11, color: "#c4b5fd" }}>{tag}</span>
             ))}
             <span style={{ marginLeft: "auto", fontSize: 11, color: "#6b7280" }}>{expanded ? "▲ less" : "▼ more"}</span>
           </div>
-          {!suggestion.onList && (
-            <button onClick={e => { e.stopPropagation(); onAddToList(suggestion); }}
-              style={{ marginTop: 10, width: "100%", padding: "8px", background: "rgba(139,92,246,0.15)", border: "1px dashed rgba(139,92,246,0.4)", borderRadius: 10, color: "#a78bfa", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-              + Add to your list
-            </button>
-          )}
+          {!suggestion.onList && <button onClick={e => { e.stopPropagation(); onAddToList(suggestion); }} style={{ marginTop: 10, width: "100%", padding: "8px", background: "rgba(139,92,246,0.15)", border: "1px dashed rgba(139,92,246,0.4)", borderRadius: 10, color: "#a78bfa", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>+ Add to your list</button>}
         </div>
       );
     }
@@ -161,8 +192,6 @@
       const [weather, setWeather] = useState(null);
       const [weatherLoading, setWeatherLoading] = useState(true);
       const [suggestions, setSuggestions] = useState([]);
-      const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-      const [suggestionsError, setSuggestionsError] = useState(null);
       const [filter, setFilter] = useState("all");
       const [adding, setAdding] = useState(false);
       const [newPlace, setNewPlace] = useState({ name: "", location: "", category: "food" });
@@ -174,39 +203,21 @@
           const data = await res.json();
           const cw = data.current_weather;
           const idx = data.hourly.time.findIndex(t => t === cw.time.slice(0, 13) + ":00");
-          setWeather({ ...cw, humidity: idx >= 0 ? data.hourly.relativehumidity_2m[idx] : 60 });
+          const w = { ...cw, humidity: idx >= 0 ? data.hourly.relativehumidity_2m[idx] : 60 };
+          setWeather(w);
+          setSuggestions(generateSuggestions(w, places));
         } catch (e) { setWeather(null); }
         setWeatherLoading(false);
-      }, []);
-
-      const fetchSuggestions = useCallback(async (w) => {
-        if (!w) return;
-        setSuggestionsLoading(true);
-        setSuggestionsError(null);
-        const tempF = Math.round(w.temperature * 9 / 5 + 32);
-        const windMph = Math.round(w.windspeed * 0.621371);
-        const wmo = WMO_CODES[w.weathercode] || { label: "Unknown" };
-        const notVisited = places.filter(p => !p.visited);
-        const listStr = notVisited.map(p => `- ${p.name} (${p.location}, ${p.category})`).join("\n");
-        const prompt = `You're helping plan a romantic date near Lawrence, MA.\n\nCurrent weather: ${tempF}°F, ${wmo.label}, wind ${windMph} mph.\n\nTheir "Places 2 Go" list (not yet visited):\n${listStr}\n\nGive exactly 5 date suggestions. Mix some from their list + NEW creative ideas nearby (NH/MA, within ~1 hour). Consider weather but think variety: food, experiences, outdoor, culture, quirky spots. She likes discovering cool new places.\n\nRespond ONLY with a valid JSON array, no markdown:\n[{"name":"","location":"","emoji":"","reason":"","details":"","vibe":"","drive":"","weatherFit":"","onList":false}]`;
-        try {
-          const res = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] }),
-          });
-          const data = await res.json();
-          const text = data.content?.map(b => b.text || "").join("") || "";
-          setSuggestions(JSON.parse(text.replace(/```json|```/g, "").trim()));
-        } catch (e) { setSuggestionsError("Couldn't load suggestions right now — try refreshing!"); }
-        setSuggestionsLoading(false);
       }, [places]);
 
-      useEffect(() => { fetchWeather(); }, [fetchWeather]);
-      useEffect(() => { if (weather && suggestions.length === 0) fetchSuggestions(weather); }, [weather]);
+      useEffect(() => { fetchWeather(); }, []);
 
-      const doRefresh = () => { setSuggestions([]); fetchWeather(); };
-      const addToList = (s) => setPlaces(prev => [...prev, { id: Date.now(), name: s.name, location: s.location, visited: false, category: "food", notes: "Added from AI suggestion", onList: true }]);
+      const visited = places.filter(p => p.visited);
+      const notVisited = places.filter(p => !p.visited);
+      const filtered = filter === "all" ? notVisited : notVisited.filter(p => p.category === filter);
+      const inputStyle = { width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "#fff", fontSize: 14, marginBottom: 8, fontFamily: "inherit" };
+
+      const addToList = (s) => setPlaces(prev => [...prev, { id: Date.now(), name: s.name, location: s.location, visited: false, category: "food", notes: "Added from suggestions", onList: true }]);
       const toggleVisited = (id) => setPlaces(prev => prev.map(p => p.id === id ? { ...p, visited: !p.visited } : p));
       const addPlace = () => {
         if (!newPlace.name.trim()) return;
@@ -215,19 +226,11 @@
         setAdding(false);
       };
 
-      const visited = places.filter(p => p.visited);
-      const notVisited = places.filter(p => !p.visited);
-      const filtered = filter === "all" ? notVisited : notVisited.filter(p => p.category === filter);
-
-      const inputStyle = { width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "#fff", fontSize: 14, marginBottom: 8, fontFamily: "inherit" };
-
       return (
-        <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #0d0d1a 0%, #1a1035 40%, #0d1a2e 100%)", fontFamily: "'Palatino Linotype', Palatino, serif", color: "#fff", paddingBottom: 80 }}>
-
-          {/* Header */}
+        <div style={{ minHeight: "100vh", background: "linear-gradient(160deg,#0d0d1a 0%,#1a1035 40%,#0d1a2e 100%)", fontFamily: "'Palatino Linotype',Palatino,serif", color: "#fff", paddingBottom: 80 }}>
           <div style={{ padding: "36px 22px 0", textAlign: "center" }}>
             <div style={{ fontSize: 10, letterSpacing: 6, color: "#7c6fa0", textTransform: "uppercase", marginBottom: 10 }}>Your Adventure Log</div>
-            <h1 style={{ fontSize: 34, fontWeight: 700, margin: 0, background: "linear-gradient(100deg, #f9a8d4 0%, #c084fc 50%, #7dd3fc 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Places 2 Go 💕</h1>
+            <h1 style={{ fontSize: 34, fontWeight: 700, margin: 0, background: "linear-gradient(100deg,#f9a8d4 0%,#c084fc 50%,#7dd3fc 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Places 2 Go 💕</h1>
             <div style={{ marginTop: 10, display: "flex", justifyContent: "center", gap: 18, fontSize: 12 }}>
               <span style={{ color: "#6ee7b7" }}>✅ {visited.length} visited</span>
               <span style={{ color: "#4b4b6a" }}>·</span>
@@ -235,40 +238,34 @@
             </div>
           </div>
 
-          {/* Tabs */}
           <div style={{ display: "flex", margin: "22px 16px 0", background: "rgba(255,255,255,0.05)", borderRadius: 14, padding: 3, gap: 2 }}>
             {[{ key: "today", label: "✦ Today" }, { key: "list", label: "🗺️ List" }, { key: "visited", label: "✅ Done" }].map(tab => (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{ flex: 1, padding: "11px 4px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700, background: activeTab === tab.key ? "linear-gradient(135deg, #7c3aed, #4f46e5)" : "transparent", color: activeTab === tab.key ? "#fff" : "#6b6b8a" }}>{tab.label}</button>
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{ flex: 1, padding: "11px 4px", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700, background: activeTab === tab.key ? "linear-gradient(135deg,#7c3aed,#4f46e5)" : "transparent", color: activeTab === tab.key ? "#fff" : "#6b6b8a" }}>{tab.label}</button>
             ))}
           </div>
 
-          {/* TODAY */}
           {activeTab === "today" && (
             <div style={{ padding: "18px 16px 0" }}>
-              <WeatherCard weather={weather} onRefresh={doRefresh} loading={weatherLoading} />
+              <WeatherCard weather={weather} onRefresh={() => { setSuggestions([]); fetchWeather(); }} loading={weatherLoading} />
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                 <div style={{ fontSize: 10, letterSpacing: 4, color: "#7c6fa0", textTransform: "uppercase" }}>✦ Date Ideas For Today</div>
-                {!suggestionsLoading && weather && (
-                  <button onClick={() => { setSuggestions([]); fetchSuggestions(weather); }} style={{ background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.35)", borderRadius: 8, padding: "4px 10px", color: "#c4b5fd", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>↻ New ideas</button>
-                )}
+                {weather && <button onClick={() => setSuggestions(generateSuggestions(weather, places))} style={{ background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.35)", borderRadius: 8, padding: "4px 10px", color: "#c4b5fd", fontSize: 11, cursor: "pointer", fontWeight: 600 }}>↻ New ideas</button>}
               </div>
-              {suggestionsLoading && (
+              {weatherLoading && (
                 <div style={{ ...card, textAlign: "center", padding: "28px 16px" }}>
                   <div className="shimmer" style={{ fontSize: 28, marginBottom: 8 }}>✨</div>
-                  <div style={{ color: "#9ca3af", fontSize: 13 }}>Claude is thinking up date ideas<br />based on today's weather…</div>
+                  <div style={{ color: "#9ca3af", fontSize: 13 }}>Finding the best date ideas<br />for today's weather…</div>
                   {[1,2,3].map(i => <div key={i} className="shimmer" style={{ height: 12, borderRadius: 8, background: "rgba(255,255,255,0.07)", marginTop: 12, width: i === 3 ? "60%" : "100%", marginLeft: i === 3 ? "auto" : 0, marginRight: i === 3 ? "auto" : 0 }} />)}
                 </div>
               )}
-              {suggestionsError && <div style={{ ...card, textAlign: "center", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5", fontSize: 13 }}>{suggestionsError}</div>}
-              {!suggestionsLoading && suggestions.map((s, i) => (
-                <div key={i} className="suggestion-enter" style={{ animationDelay: `${i * 0.08}s` }}>
+              {!weatherLoading && suggestions.map((s, i) => (
+                <div key={`${s.name}-${i}`} className="suggestion-enter" style={{ animationDelay: `${i * 0.08}s` }}>
                   <SuggestionCard suggestion={s} index={i} onAddToList={addToList} />
                 </div>
               ))}
             </div>
           )}
 
-          {/* LIST */}
           {activeTab === "list" && (
             <div style={{ padding: "18px 16px 0" }}>
               <div style={{ display: "flex", gap: 7, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
@@ -302,7 +299,7 @@
                     <option value="outdoor">🌊 Outdoor</option>
                   </select>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={addPlace} style={{ flex: 1, padding: "10px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Add</button>
+                    <button onClick={addPlace} style={{ flex: 1, padding: "10px", background: "linear-gradient(135deg,#7c3aed,#4f46e5)", border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Add</button>
                     <button onClick={() => setAdding(false)} style={{ flex: 1, padding: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#6b7280", fontSize: 14, cursor: "pointer" }}>Cancel</button>
                   </div>
                 </div>
@@ -310,7 +307,6 @@
             </div>
           )}
 
-          {/* VISITED */}
           {activeTab === "visited" && (
             <div style={{ padding: "18px 16px 0" }}>
               <div style={{ fontSize: 10, letterSpacing: 4, color: "#7c6fa0", textTransform: "uppercase", marginBottom: 14 }}>Places explored together</div>
@@ -334,7 +330,7 @@
                 <div style={{ ...card, textAlign: "center", marginTop: 12 }}>
                   <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 10 }}>{visited.length} of {places.length} places explored 💕</div>
                   <div style={{ height: 8, borderRadius: 10, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${(visited.length / places.length) * 100}%`, background: "linear-gradient(90deg, #7c3aed, #ec4899, #f59e0b)", borderRadius: 10, transition: "width 0.5s ease" }} />
+                    <div style={{ height: "100%", width: `${(visited.length / places.length) * 100}%`, background: "linear-gradient(90deg,#7c3aed,#ec4899,#f59e0b)", borderRadius: 10, transition: "width 0.5s ease" }} />
                   </div>
                   <div style={{ fontSize: 11, color: "#4b4b6a", marginTop: 8 }}>{Math.round((visited.length / places.length) * 100)}% of the adventure complete</div>
                 </div>
@@ -349,3 +345,4 @@
   </script>
 </body>
 </html>
+ENDOFFILE
